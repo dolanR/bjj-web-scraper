@@ -1,10 +1,23 @@
 import puppeteer, { Browser } from 'puppeteer';
+import { createClient } from '@libsql/client';
+import 'dotenv/config';
+
+console.log(process.env.LIBSQL_DB_AUTH_TOKEN);
+const client = createClient({
+	url: 'libsql://bjj-db-dolanr.turso.io',
+	authToken: process.env.LIBSQL_DB_AUTH_TOKEN,
+});
 
 type Event = {
 	title: string;
 	date: string;
-	location: string;
+	location?: string;
+	link?: string;
 	exactDate?: Date;
+	coordinates?: {
+		longitude: number;
+		latitude: number;
+	};
 };
 
 const launchBrowser = async () => {
@@ -14,7 +27,12 @@ const launchBrowser = async () => {
 	try {
 		browser = await puppeteer.launch({
 			headless: 'new',
-			args: ['--no-sandbox', '--disable-setuid-sandbox'],
+			args: [
+				'--no-sandbox',
+				'--disable-setuid-sandbox',
+				'--disable-web-security',
+				'--disable-features=IsolateOrigins,site-per-process',
+			],
 		});
 	} catch (error) {
 		console.log(error);
@@ -44,6 +62,7 @@ const scrapeData = async (browserInstance: Browser) => {
 const scraperObject = {
 	ibjjfUrl: 'https://ibjjf.com/events/calendar',
 	giUrl: 'https://grapplingindustries.com/events/',
+
 	async ibjjfScraper(browser: Browser) {
 		const page = await browser.newPage();
 		console.log(`Navigating to ${this.ibjjfUrl}...`);
@@ -51,12 +70,14 @@ const scraperObject = {
 		// Wait for the required DOM to be rendered
 		await page.waitForSelector('#jan');
 		// Get the link to all the events
-		const data = await page.$$eval('.event-row', (events) => {
+		const data = await page.$$eval('.published', (events) => {
 			return events.map((event) => {
 				const title = event.querySelector('.name').innerText;
 				const date = event.querySelector('.date').innerText;
+				const link = event.getAttribute('href');
 				const location = event.querySelector('.local').innerText;
-				return { title, date, location };
+				const coordinates = { longitude: 0, latitude: 0 };
+				return { title, date, coordinates, location, link };
 			});
 		});
 
@@ -67,16 +88,16 @@ const scraperObject = {
         title: "May 6 - May 7",
         date: "Denver International Open IBJJF Jiu-Jitsu No-Gi Championship 2023",
         location: "Regis University, Denver"
-      }, {
-        title: "May 7",
+	}, {
+		title: "May 7",
         date: "Atlanta Spring Kids International Open IBJJF Jiu-Jitsu Championship 2023",
         location: "Georgia International Convention Center, College Park"
-      }, {
+	}, {
         title: "May 13 - May 14",
         date: "Houston International Open IBJJF Jiu-Jitsu Championship 2023",
         location: "1 NRG Park, Houston"
-      }
-      ```
+	}
+	```
     */
 
 		let filteredArray: Event[] = [];
@@ -112,8 +133,22 @@ const scraperObject = {
 				break;
 			}
 		}
-
-		console.log(filteredArray);
+		for (let i = 0; i < filteredArray.length; i++) {
+			const ibjjfEventUrl = 'https://ibjjf.com' + filteredArray[i].link;
+			console.log(`Navigating to ${ibjjfEventUrl}...`);
+			await page.goto(ibjjfEventUrl);
+			const element = await page.waitForSelector('.map > iframe');
+			if (!element) return null;
+			const mapLink = await page.$eval('.map > iframe', (el) => el.getAttribute('src'));
+			let longitude = parseFloat(mapLink.split('q=')[1].split(',')[0]);
+			let latitude = parseFloat(mapLink.split('q=')[1].split(',')[1]);
+			if (Number.isNaN(longitude) || Number.isNaN(latitude)) {
+				latitude = 0;
+				longitude = 0;
+			}
+			filteredArray[i].coordinates = { longitude, latitude };
+			console.log(filteredArray[i]);
+		}
 
 		await page.close();
 		return filteredArray;
@@ -134,30 +169,31 @@ const scraperObject = {
 			return events.map((event) => {
 				const title = event.querySelector('h2').innerText;
 				const date = event.querySelector('.date').innerText;
+				const link = event.querySelector('a').getAttribute('href');
 				const location = event.querySelector('.location').innerText;
-				return { title, date, location };
+				const coordinates = { longitude: 0, latitude: 0 };
+				return { title, date, link, location, coordinates };
 			});
 		});
+		for (let i = 0; i < data.length; i++) {
+			const giEventUrl = data[i].link;
+			console.log(`Navigating to ${giEventUrl}...`);
+			await page.goto(giEventUrl);
+			const element = await page.waitForSelector(
+				'body > div.content > section > div > div > div.col-sm-4.col-sm-offset-1 > div:nth-child(3) > div.sc-card-body > ul > li > a'
+			);
+			if (!element) return null;
+			const mapLink = await page.$eval(
+				'body > div.content > section > div > div > div.col-sm-4.col-sm-offset-1 > div:nth-child(3) > div.sc-card-body > ul > li > a',
+				(el) => el.getAttribute('href')
+			);
+			console.log(mapLink);
+			const longitude = parseFloat(mapLink.split('q=')[1].split(',')[0]);
+			const latitude = parseFloat(mapLink.split('q=')[1].split(',')[1]);
+			data[i].coordinates = { longitude, latitude };
+			console.log(data[i]);
+		}
 
-		/*
-      Example event data:
-      ```
-      {
-        title: "May 6 - May 7",
-        date: "Denver International Open IBJJF Jiu-Jitsu No-Gi Championship 2023",
-        location: "Regis University, Denver"
-      }, {
-        title: "May 7",
-        date: "Atlanta Spring Kids International Open IBJJF Jiu-Jitsu Championship 2023",
-        location: "Georgia International Convention Center, College Park"
-      }, {
-        title: "May 13 - May 14",
-        date: "Houston International Open IBJJF Jiu-Jitsu Championship 2023",
-        location: "1 NRG Park, Houston"
-      }
-      ```
-    */
-		console.log(data);
 		await page.close();
 		return data as Event[];
 	},
@@ -177,6 +213,37 @@ if (browserInstance) {
 		}
 		const finalArray = mergeAndSortArrays(dataObject.ibjjfData, dataObject.giData);
 		console.log(finalArray);
+		try {
+			const rs = await client.execute('delete from events');
+		} catch (e) {
+			console.error(e);
+		}
+		try {
+			for (let i = 0; i < finalArray.length; i++) {
+				if (finalArray[i].coordinates === undefined) console.log(finalArray[i]);
+				if (Number.isNaN(finalArray[i].coordinates?.latitude) || Number.isNaN(finalArray[i].coordinates?.longitude))
+					console.log(finalArray[i]);
+				if (finalArray[i].coordinates?.latitude === 0 || finalArray[i].coordinates?.longitude === 0)
+					console.log(finalArray[i]);
+			}
+			for (let i = 0; i < finalArray.length; i++) {
+				const rss = await client.execute({
+					sql: 'insert into events ( title, date, location, link, exactDate, longitude, latitude ) values ( :title, :date, :location, :link, :exactDate, :longitude, :latitude )',
+					args: {
+						title: finalArray[i].title,
+						date: finalArray[i].date,
+						location: finalArray[i].location!,
+						link: finalArray[i].link!,
+						exactDate: finalArray[i].exactDate!.toISOString(),
+						longitude: finalArray[i].coordinates!.longitude,
+						latitude: finalArray[i].coordinates!.latitude,
+					},
+				});
+			}
+			console.log('Finished inserting data');
+		} catch (error) {
+			console.log(error);
+		}
 	}
 }
 function mergeAndSortArrays(array1: Event[], array2: Event[]) {
