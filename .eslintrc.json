@@ -1,0 +1,21 @@
+{
+	"extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
+	"parser": "@typescript-eslint/parser",
+	"plugins": ["@typescript-eslint"],
+	"rules": {
+		"@typescript-eslint/quotes": [
+			"error",
+			"single",
+			{
+				"allowTemplateLiterals": true,
+				"avoidEscape": true
+			}
+		],
+		"@typescript-eslint/no-unused-vars": "warn",
+		// to enforce using type for object type definitions, can be type or interface
+		"@typescript-eslint/consistent-type-definitions": ["warn", "type"]
+	},
+	"env": {
+		"node": true
+	}
+}
