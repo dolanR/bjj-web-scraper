@@ -1,43 +1,44 @@
 {
-  "name": "bun-webscrape-test",
-  "description": "webscraper test",
-  "module": "./src/index.ts",
-  "type": "module",
-  "author": {
-    "name": "Jerren T",
-    "email": "Jerren@trifall.com"
-  },
-  "license": "GPL-3.0-or-later",
-  "scripts": {
-    "dev": "bun run ./src/index.ts",
-    "build": "bun clean && bun typecheck && bun build --target=bun ./src/index.ts --outdir=./dist",
-    "start": "bun run ./dist/index.js",
-    "lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --cache --fix --ignore-path ./.gitignore",
-    "format": "prettier --ignore-path .gitignore --log-level warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
-    "pipeline": "bun install && bun format && bun lint && bun typecheck && bun clean && bun build --target=bun ./src/index.ts --outdir=./dist && cp ./src/lib/*.json ./dist/",
-    "prepare": "husky install",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "cheerio": "^1.0.0-rc.12",
-    "puppeteer": "^21.5.0"
-  },
-  "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.7.3",
-    "@typescript-eslint/parser": "^6.7.3",
-    "bun-types": "latest",
-    "eslint": "^8.50.0",
-    "eslint-config-prettier": "^9.0.0",
-    "husky": "^8.0.0",
-    "lint-staged": "^14.0.1",
-    "prettier": "^3.0.3",
-    "typescript": "5.2.2"
-  },
-  "lint-staged": {
-    "src/**/*.{js,jsx,ts,tsx}": [
-      "eslint --cache --fix --max-warnings=0",
-      "prettier --write --ignore-unknown"
-    ],
-    "src/**/*.{css,scss,md,json}": "prettier --write --ignore-unknown"
-  }
+	"name": "yarn-webscrape-test",
+	"description": "webscraper test",
+	"module": "./src/index.ts",
+	"type": "module",
+	"author": {
+		"name": "Jerren T",
+		"email": "Jerren@trifall.com"
+	},
+	"license": "GPL-3.0-or-later",
+	"scripts": {
+		"dev": "ts-node ./src/index.ts",
+		"build": "yarn clean && yarn typecheck && yarn build",
+		"start": "yarn run ./dist/index.js",
+		"lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --cache --fix --ignore-path ./.gitignore",
+		"format": "prettier --ignore-path .gitignore --log-level warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
+		"pipeline": "yarn install && yarn format && yarn lint && yarn typecheck && yarn clean && yarn build",
+		"prepare": "husky install",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@types/node": "^20.8.10",
+		"cheerio": "^1.0.0-rc.12",
+		"puppeteer": "^21.5.0",
+		"ts-node": "^10.9.1"
+	},
+	"devDependencies": {
+		"@typescript-eslint/eslint-plugin": "^6.7.3",
+		"@typescript-eslint/parser": "^6.7.3",
+		"eslint": "^8.50.0",
+		"eslint-config-prettier": "^9.0.0",
+		"husky": "^8.0.0",
+		"lint-staged": "^14.0.1",
+		"prettier": "^3.0.3",
+		"typescript": "5.2.2"
+	},
+	"lint-staged": {
+		"src/**/*.{js,jsx,ts,tsx}": [
+			"eslint --cache --fix --max-warnings=0",
+			"prettier --write --ignore-unknown"
+		],
+		"src/**/*.{css,scss,md,json}": "prettier --write --ignore-unknown"
+	}
 }
