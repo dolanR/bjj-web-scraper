@@ -74,7 +74,7 @@ const scraperObject = {
 			return events.map((event) => {
 				const title = event.querySelector('.name').innerText;
 				const date = event.querySelector('.date').innerText;
-				const link = event.getAttribute('href');
+				const link = 'https://ibjjf.com' + event.getAttribute('href');
 				const location = event.querySelector('.local').innerText;
 				const coordinates = { longitude: 0, latitude: 0 };
 				return { title, date, coordinates, location, link };
@@ -134,9 +134,8 @@ const scraperObject = {
 			}
 		}
 		for (let i = 0; i < filteredArray.length; i++) {
-			const ibjjfEventUrl = 'https://ibjjf.com' + filteredArray[i].link;
-			console.log(`Navigating to ${ibjjfEventUrl}...`);
-			await page.goto(ibjjfEventUrl);
+			console.log(`Navigating to ${filteredArray[i].link}...`);
+			await page.goto(filteredArray[i].link!);
 			const element = await page.waitForSelector('.map > iframe');
 			if (!element) return null;
 			const mapLink = await page.$eval('.map > iframe', (el) => el.getAttribute('src'));

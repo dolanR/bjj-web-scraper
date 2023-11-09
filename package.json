@@ -9,7 +9,7 @@
 	},
 	"license": "GPL-3.0-or-later",
 	"scripts": {
-		"dev": "ts-node ./src/index.ts",
+		"dev": "ts-node --esm src/index.ts",
 		"build": "yarn clean && yarn typecheck && yarn build",
 		"start": "yarn run ./dist/index.js",
 		"lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --cache --fix --ignore-path ./.gitignore",
