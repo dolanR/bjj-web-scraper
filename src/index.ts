@@ -225,7 +225,7 @@ if (browserInstance) {
 					Math.abs(event.coordinates!.latitude - otherEvent.coordinates!.latitude) < 0.001 &&
 					Math.abs(event.coordinates!.longitude - otherEvent.coordinates!.longitude) < 0.001
 				) {
-					event.coordinates!.longitude += 0.003;
+					event.coordinates!.longitude += 0.015;
 				}
 			}
 		}
