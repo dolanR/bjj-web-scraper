@@ -215,6 +215,20 @@ if (browserInstance) {
 			event.exactDate = giDateConvert(event);
 		}
 		const finalArray = mergeAndSortArrays(dataObject.ibjjfData, dataObject.giData);
+		for (let i = 0; i < finalArray.length; i++) {
+			// Loop over each event and detect if two events have the same latitude and longitude, if so, add a small amount to the longitude
+			const event = finalArray[i];
+			for (let j = 0; j < finalArray.length; j++) {
+				if (i === j) continue;
+				const otherEvent = finalArray[j];
+				if (
+					Math.abs(event.coordinates!.latitude - otherEvent.coordinates!.latitude) < 0.001 &&
+					Math.abs(event.coordinates!.longitude - otherEvent.coordinates!.longitude) < 0.001
+				) {
+					event.coordinates!.longitude += 0.003;
+				}
+			}
+		}
 		console.log(finalArray);
 		try {
 			const rs = await client.execute('delete from events');
