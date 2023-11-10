@@ -139,11 +139,11 @@ const scraperObject = {
 			const element = await page.waitForSelector('.map > iframe');
 			if (!element) return null;
 			const mapLink = await page.$eval('.map > iframe', (el) => el.getAttribute('src'));
-			let longitude = parseFloat(mapLink.split('q=')[1].split(',')[0]);
-			let latitude = parseFloat(mapLink.split('q=')[1].split(',')[1]);
+			let longitude = parseFloat(mapLink.split('q=')[1].split(',')[1]);
+			let latitude = parseFloat(mapLink.split('q=')[1].split(',')[0]);
 			if (Number.isNaN(longitude) || Number.isNaN(latitude)) {
-				latitude = 0;
-				longitude = 0;
+				latitude = -82.85201536;
+				longitude = 26.3651875;
 			}
 			filteredArray[i].coordinates = { longitude, latitude };
 			console.log(filteredArray[i]);
@@ -187,8 +187,12 @@ const scraperObject = {
 				(el) => el.getAttribute('href')
 			);
 			console.log(mapLink);
-			const longitude = parseFloat(mapLink.split('q=')[1].split(',')[0]);
-			const latitude = parseFloat(mapLink.split('q=')[1].split(',')[1]);
+			let longitude = parseFloat(mapLink.split('q=')[1].split(',')[1]);
+			let latitude = parseFloat(mapLink.split('q=')[1].split(',')[0]);
+			if (longitude === 0 && latitude === 0) {
+				longitude = 26.3651875;
+				latitude = -82.85201536;
+			}
 			data[i].coordinates = { longitude, latitude };
 			console.log(data[i]);
 		}
