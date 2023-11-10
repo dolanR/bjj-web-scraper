@@ -47,9 +47,10 @@ const scrapeData = async (browserInstance: Browser) => {
 	let browser;
 	try {
 		browser = await browserInstance;
+		const AJPData = await scraperObject.AJPscraper(browser);
 		const ibjjfData = await scraperObject.ibjjfScraper(browser);
 		const giData = await scraperObject.giScraper(browser);
-		if (ibjjfData === null || giData === null) {
+		if (ibjjfData === null || giData === null || AJPData === null) {
 			console.log('No data was scraped');
 			return null;
 		}
@@ -62,6 +63,8 @@ const scrapeData = async (browserInstance: Browser) => {
 const scraperObject = {
 	ibjjfUrl: 'https://ibjjf.com/events/calendar',
 	giUrl: 'https://grapplingindustries.com/events/',
+	AJPUrl1: 'https://ajptour.com/en/events-1/events-calendar-2022-2023',
+	AJPUrl2: 'https://ajptour.com/en/events-1/events-calendar-2023-2024',
 
 	async ibjjfScraper(browser: Browser) {
 		const page = await browser.newPage();
@@ -199,6 +202,34 @@ const scraperObject = {
 
 		await page.close();
 		return data as Event[];
+	},
+
+	async AJPscraper(browser: Browser) {
+		const page = await browser.newPage();
+		console.log(`Navigating to ${this.AJPUrl1}...`);
+		await page.goto(this.AJPUrl1);
+		await page.waitForSelector('body > div.content > section.inverted');
+		const data = await page.$$eval('body > div.content > section.inverted > div > p', (events) => {
+			return events.map((event) => {
+				if (event.innerText.includes('LEARNING ACADEMY')) return;
+				let title = '';
+				if (event.innerText.includes(new Date().getFullYear() + ' -  GI')) {
+					title = event.innerText.split(new Date().getFullYear() + ' -  GI')[0] + new Date().getFullYear() + ' -  GI';
+				} else if (event.innerText.includes('YOUTH')) {
+					title = event.innerText.split('YOUTH')[0] + 'YOUTH';
+				} else if (event.innerText.includes('MASTERS')) {
+					title = event.innerText.split('MASTERS')[0] + 'MASTERS';
+				} else if (event.innerText.includes('PROFESSIONAL')) {
+					title = event.innerText.split('PROFESSIONAL')[0] + 'PROFESSIONAL';
+				} else {
+					title = event.innerText.split(new Date().getFullYear())[0] + new Date().getFullYear();
+				}
+				// const date = event.innerText.split(title + ' ')[1].split(' @')[0];
+				// const link = event.querySelector('a').getAttribute('href');
+				return { title };
+			});
+		});
+		console.log(data);
 	},
 };
 
