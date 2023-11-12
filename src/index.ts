@@ -1,6 +1,6 @@
-import puppeteer, { Browser } from 'puppeteer';
 import { createClient } from '@libsql/client';
 import 'dotenv/config';
+import puppeteer, { Browser } from 'puppeteer';
 
 console.log(process.env.LIBSQL_DB_AUTH_TOKEN);
 const client = createClient({
@@ -44,12 +44,15 @@ const launchBrowser = async () => {
 const browserInstance = await launchBrowser();
 
 const scrapeData = async (browserInstance: Browser) => {
-	let browser;
 	try {
-		browser = await browserInstance;
-		const AJPData = await scraperObject.AJPscraper(browser);
-		const ibjjfData = await scraperObject.ibjjfScraper(browser);
-		const giData = await scraperObject.giScraper(browser);
+		if (browserInstance === null) {
+			console.log('Browser instance is null');
+			return null;
+		}
+
+		const AJPData = await scraperObject.AJPscraper(browserInstance);
+		const ibjjfData = await scraperObject.ibjjfScraper(browserInstance);
+		const giData = await scraperObject.giScraper(browserInstance);
 		if (ibjjfData === null || giData === null || AJPData === null) {
 			console.log('No data was scraped');
 			return null;
@@ -206,8 +209,9 @@ const scraperObject = {
 					title = event.innerText.split(new Date().getFullYear())[0] + new Date().getFullYear();
 				}
 				const date = event.innerText.split(' @ ')[0].split(title)[1];
-				const link = event.querySelector('a').getAttribute('href');
-				return { title, date };
+				const linkElement = event.querySelector('a');
+				const link = linkElement ? event.querySelector('a').getAttribute('href') : undefined;
+				return { title, date, link };
 			});
 		});
 		console.log(data);
