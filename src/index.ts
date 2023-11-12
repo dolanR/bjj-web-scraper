@@ -2,7 +2,7 @@ import { createClient } from '@libsql/client';
 import 'dotenv/config';
 import puppeteer, { Browser } from 'puppeteer';
 
-console.log(process.env.LIBSQL_DB_AUTH_TOKEN);
+console.log(`ENV - LIBSQL_DB_AUTH_TOKEN: ${process.env.LIBSQL_DB_AUTH_TOKEN}`);
 const client = createClient({
 	url: 'libsql://bjj-db-dolanr.turso.io',
 	authToken: process.env.LIBSQL_DB_AUTH_TOKEN,
@@ -21,12 +21,12 @@ type Event = {
 };
 
 const launchBrowser = async () => {
-	console.log(`fetching`);
+	console.log(`Starting Browser...`);
 
 	let browser: Browser | null = null;
 	try {
 		browser = await puppeteer.launch({
-			headless: 'new',
+			headless: false,
 			args: [
 				'--no-sandbox',
 				'--disable-setuid-sandbox',
@@ -76,6 +76,7 @@ const scraperObject = {
 	AJPUrl2: 'https://ajptour.com/en/events-1/events-calendar-2023-2024',
 
 	async ibjjfScraper(browser: Browser) {
+		console.log(`Starting IBJJF Scraper...`);
 		const page = await browser.newPage();
 		console.log(`Navigating to ${this.ibjjfUrl}...`);
 		await page.goto(this.ibjjfUrl);
@@ -120,7 +121,9 @@ const scraperObject = {
 				}
 
 				// slice array from beginning to current index
-				console.log('slicing at index: ' + i);
+				console.log(
+					`[Past-Dates-Fix] Slicing all events before index: ${i}, event date: ${event.date}, event title: ${event.title}`
+				);
 				filteredArray = data.slice(i);
 
 				break;
@@ -143,10 +146,12 @@ const scraperObject = {
 		}
 
 		await page.close();
+		console.log(`Finished IBJJF Scraper.`);
 		return filteredArray;
 	},
 
 	async giScraper(browser: Browser) {
+		console.log(`Starting GI Scraper...`);
 		const page = await browser.newPage();
 		console.log(`Navigating to ${this.giUrl}...`);
 		await page.goto(this.giUrl);
@@ -191,17 +196,20 @@ const scraperObject = {
 		}
 
 		await page.close();
+		console.log(`Finished GI Scraper.`);
 		return data as Event[];
 	},
 
 	async AJPscraper(browser: Browser, url: string) {
+		console.log(`Starting AJP Scraper...`);
 		const page = await browser.newPage();
 		console.log(`Navigating to ${url}...`);
 		await page.goto(url);
 		await page.waitForSelector('body > div.content > section.inverted > div > p:nth-child(5) > a');
-		const data = await page.$$eval('body > div.content > section.inverted > div > p', (events) => {
+		const data = (await page.$$eval('body > div.content > section.inverted > div > p', (events) => {
 			return events.map((event) => {
 				if (event.innerText.includes('LEARNING ACADEMY')) return;
+
 				let title = '';
 				if (event.innerText.includes(new Date().getFullYear() + ' - GI')) {
 					title = event.innerText.split(new Date().getFullYear() + ' - GI')[0] + new Date().getFullYear() + ' - GI';
@@ -215,19 +223,70 @@ const scraperObject = {
 					title = event.innerText.split(new Date().getFullYear())[0] + new Date().getFullYear();
 				}
 				if (title) title = title.toString().trim();
-				let date = event.innerText.split('@')[0].split(title)[1];
+				const linkElement = event.querySelector('a');
+				const link = linkElement ? linkElement.getAttribute('href') : undefined;
+
+				let date: string = 'N/A';
+
+				if (linkElement && linkElement.parentElement) {
+					linkElement.parentElement.removeChild(linkElement!);
+					date = event.innerText.split('@')[0];
+				}
 				if (date) date = date.toString().trim();
 				let location = event.innerText.split('@')[1];
 				location = location.toString().trim();
-				const linkElement = event.querySelector('a');
-				const link = linkElement ? event.querySelector('a').getAttribute('href') : undefined;
+
 				const coordinates = { longitude: 0, latitude: 0 };
 				return { title, date, location, link, coordinates };
 			});
-		});
+		})) as Event[];
+
+		let filteredArray: Event[] = [];
+		const month = new Date().getMonth() + 1;
+
 		for (let i = 0; i < data.length; i++) {
-			if (data[i] ?? data[i]?.link) {
-				const AJPEventUrl = data[i]!.link;
+			const event = data[i];
+			if (!event) continue;
+
+			if (!event.date || event.date === 'N/A') {
+				console.warn(`Warning: No date found for AJP event at index ${i}: ${JSON.stringify(event, null, 2)}`);
+				continue;
+			}
+
+			let eventDate: string;
+			if (event.date.includes('-')) {
+				// console.log(event.date);
+				eventDate = event.date.split('-')[0].trim();
+			} else {
+				eventDate = event.date.trim();
+			}
+
+			const eventMonth = getMonthFromString(eventDate.split(' ')[0]);
+			const eventDay = parseInt(eventDate.split(' ')[1].replace('*', ''));
+
+			// find the first event that is in the future
+			if (eventMonth >= month) {
+				if (eventMonth === month && eventDay < new Date().getDate()) {
+					continue;
+				}
+
+				// slice array from beginning to current index
+				console.log(
+					`[Past-Dates-Fix] Slicing all events before index: ${i}, event date: ${event.date}, event title: ${event.title}`
+				);
+				filteredArray = data.slice(i);
+
+				break;
+			}
+		}
+
+		for (let i = 0; i < filteredArray.length; i++) {
+			if (filteredArray[i] && filteredArray[i]?.link) {
+				const AJPEventUrl = filteredArray[i]!.link;
+				if (!AJPEventUrl) {
+					console.warn(`Warning: No date found for AJP event at index ${i}: ${filteredArray[i]!.title}`);
+					continue;
+				}
 				console.log(`Navigating to ${AJPEventUrl}...`);
 				await page.goto(AJPEventUrl);
 				const element = await page.waitForSelector(
@@ -246,18 +305,20 @@ const scraperObject = {
 					longitude = 26.3651875;
 					latitude = -82.85201536;
 				}
-				data[i]!.coordinates = { longitude, latitude };
-				console.log(data[i]);
+				filteredArray[i]!.coordinates = { longitude, latitude };
+				console.log(filteredArray[i]);
 			}
 		}
 		await page.close();
-		return data as Event[];
+		console.log(`Finished AJP Scraper.`);
+		return filteredArray as Event[];
 	},
 };
 
 if (browserInstance) {
 	const dataObject = await scrapeData(browserInstance);
 	await browserInstance.close();
+	console.log(`Finished scraping data. Starting date conversions and sorting...`);
 	if (dataObject) {
 		for (let i = 0; i < dataObject.AJPData.length; i++) {
 			const event = dataObject.AJPData[i];
@@ -287,9 +348,13 @@ if (browserInstance) {
 				}
 			}
 		}
+
 		console.log(finalArray);
+		console.log(`Finished date conversions and sorting. Starting to insert data...`);
 		try {
-			const rs = await client.execute('delete from events');
+			console.log('Clearing events table in database...');
+			await client.execute('delete from events');
+			console.log('Events table cleared.');
 		} catch (e) {
 			console.error(e);
 		}
@@ -301,8 +366,9 @@ if (browserInstance) {
 				if (finalArray[i].coordinates?.latitude === 0 || finalArray[i].coordinates?.longitude === 0)
 					console.log(finalArray[i]);
 			}
+			console.log('Inserting data into database...');
 			for (let i = 0; i < finalArray.length; i++) {
-				const rss = await client.execute({
+				await client.execute({
 					sql: 'insert into events ( title, date, location, link, exactDate, longitude, latitude ) values ( :title, :date, :location, :link, :exactDate, :longitude, :latitude )',
 					args: {
 						title: finalArray[i].title,
