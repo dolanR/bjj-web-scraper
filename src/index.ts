@@ -50,14 +50,20 @@ const scrapeData = async (browserInstance: Browser) => {
 			return null;
 		}
 
-		const AJPData = await scraperObject.AJPscraper(browserInstance);
-		const ibjjfData = await scraperObject.ibjjfScraper(browserInstance);
-		const giData = await scraperObject.giScraper(browserInstance);
-		if (ibjjfData === null || giData === null || AJPData === null) {
+		const AJPData1 = await scraperObject.AJPscraper(browserInstance, scraperObject.AJPUrl1);
+		const AJPData2 = await scraperObject.AJPscraper(browserInstance, scraperObject.AJPUrl2);
+		if (!AJPData1 || !AJPData2) {
 			console.log('No data was scraped');
 			return null;
 		}
-		return { ibjjfData, giData };
+		const AJPData = [...AJPData1, ...AJPData2];
+		const ibjjfData = await scraperObject.ibjjfScraper(browserInstance);
+		const giData = await scraperObject.giScraper(browserInstance);
+		if (!ibjjfData || !giData || !AJPData) {
+			console.log('No data was scraped');
+			return null;
+		}
+		return { AJPData, ibjjfData, giData };
 	} catch (err) {
 		console.log('Could not resolve the browser instance => ', err);
 	}
@@ -188,10 +194,10 @@ const scraperObject = {
 		return data as Event[];
 	},
 
-	async AJPscraper(browser: Browser) {
+	async AJPscraper(browser: Browser, url: string) {
 		const page = await browser.newPage();
-		console.log(`Navigating to ${this.AJPUrl1}...`);
-		await page.goto(this.AJPUrl1);
+		console.log(`Navigating to ${url}...`);
+		await page.goto(url);
 		await page.waitForSelector('body > div.content > section.inverted > div > p:nth-child(5) > a');
 		const data = await page.$$eval('body > div.content > section.inverted > div > p', (events) => {
 			return events.map((event) => {
@@ -208,13 +214,44 @@ const scraperObject = {
 				} else {
 					title = event.innerText.split(new Date().getFullYear())[0] + new Date().getFullYear();
 				}
-				const date = event.innerText.split(' @ ')[0].split(title)[1];
+				if (title) title = title.toString().trim();
+				let date = event.innerText.split('@')[0].split(title)[1];
+				if (date) date = date.toString().trim();
+				let location = event.innerText.split('@')[1];
+				location = location.toString().trim();
 				const linkElement = event.querySelector('a');
 				const link = linkElement ? event.querySelector('a').getAttribute('href') : undefined;
-				return { title, date, link };
+				const coordinates = { longitude: 0, latitude: 0 };
+				return { title, date, location, link, coordinates };
 			});
 		});
-		console.log(data);
+		for (let i = 0; i < data.length; i++) {
+			if (data[i] ?? data[i]?.link) {
+				const AJPEventUrl = data[i]!.link;
+				console.log(`Navigating to ${AJPEventUrl}...`);
+				await page.goto(AJPEventUrl);
+				const element = await page.waitForSelector(
+					'body > div.content > section > div > div > div.col-sm-4.col-sm-offset-1 > div:nth-child(3) > div > div > iframe'
+				);
+				if (!element) return null;
+				const frame = await element.contentFrame();
+				if (!frame) return null;
+				const mapLink = await page.$eval(
+					'body > div.content > section > div > div > div.col-sm-4.col-sm-offset-1 > div:nth-child(3) > div > div > iframe',
+					(el) => el.getAttribute('src')
+				);
+				let longitude = parseFloat(mapLink.split('&lat=')[1].split('&')[0]);
+				let latitude = parseFloat(mapLink.split('&lng=')[1].split('&')[0]);
+				if (longitude === 0 && latitude === 0) {
+					longitude = 26.3651875;
+					latitude = -82.85201536;
+				}
+				data[i]!.coordinates = { longitude, latitude };
+				console.log(data[i]);
+			}
+		}
+		await page.close();
+		return data as Event[];
 	},
 };
 
@@ -222,6 +259,10 @@ if (browserInstance) {
 	const dataObject = await scrapeData(browserInstance);
 	await browserInstance.close();
 	if (dataObject) {
+		for (let i = 0; i < dataObject.AJPData.length; i++) {
+			const event = dataObject.AJPData[i];
+			event.exactDate = AJPDateConvert(event);
+		}
 		for (let i = 0; i < dataObject.ibjjfData.length; i++) {
 			const event = dataObject.ibjjfData[i];
 			event.exactDate = ibjjfDateConvert(event);
@@ -230,7 +271,8 @@ if (browserInstance) {
 			const event = dataObject.giData[i];
 			event.exactDate = giDateConvert(event);
 		}
-		const finalArray = mergeAndSortArrays(dataObject.ibjjfData, dataObject.giData);
+		const tempArray = mergeAndSortArrays(dataObject.ibjjfData, dataObject.giData);
+		const finalArray = mergeAndSortArrays(tempArray, dataObject.AJPData);
 		for (let i = 0; i < finalArray.length; i++) {
 			// Loop over each event and detect if two events have the same latitude and longitude, if so, add a small amount to the longitude
 			const event = finalArray[i];
@@ -314,4 +356,11 @@ function giDateConvert(event: Event) {
 	if (event.date.includes(' - ')) return new Date(event.date.split(' - ')[0]);
 	if (event.date.split(' ').length < 3) return new Date(new Date().getFullYear() + ' ' + event.date);
 	return new Date(event.date);
+}
+function AJPDateConvert(event: Event) {
+	if (event.title.includes(new Date().getFullYear().toString())) {
+		return new Date(event.date + ' ' + new Date().getFullYear().toString());
+	} else {
+		return new Date(event.date + ' ' + (new Date().getFullYear() + 1).toString());
+	}
 }
