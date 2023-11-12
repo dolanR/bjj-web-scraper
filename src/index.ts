@@ -84,25 +84,6 @@ const scraperObject = {
 			});
 		});
 
-		/*
-      Example event data:
-      ```
-      {
-        title: "May 6 - May 7",
-        date: "Denver International Open IBJJF Jiu-Jitsu No-Gi Championship 2023",
-        location: "Regis University, Denver"
-	}, {
-		title: "May 7",
-        date: "Atlanta Spring Kids International Open IBJJF Jiu-Jitsu Championship 2023",
-        location: "Georgia International Convention Center, College Park"
-	}, {
-        title: "May 13 - May 14",
-        date: "Houston International Open IBJJF Jiu-Jitsu Championship 2023",
-        location: "1 NRG Park, Houston"
-	}
-	```
-    */
-
 		let filteredArray: Event[] = [];
 		const month = new Date().getMonth() + 1;
 
@@ -208,13 +189,13 @@ const scraperObject = {
 		const page = await browser.newPage();
 		console.log(`Navigating to ${this.AJPUrl1}...`);
 		await page.goto(this.AJPUrl1);
-		await page.waitForSelector('body > div.content > section.inverted');
+		await page.waitForSelector('body > div.content > section.inverted > div > p:nth-child(5) > a');
 		const data = await page.$$eval('body > div.content > section.inverted > div > p', (events) => {
 			return events.map((event) => {
 				if (event.innerText.includes('LEARNING ACADEMY')) return;
 				let title = '';
-				if (event.innerText.includes(new Date().getFullYear() + ' -  GI')) {
-					title = event.innerText.split(new Date().getFullYear() + ' -  GI')[0] + new Date().getFullYear() + ' -  GI';
+				if (event.innerText.includes(new Date().getFullYear() + ' - GI')) {
+					title = event.innerText.split(new Date().getFullYear() + ' - GI')[0] + new Date().getFullYear() + ' - GI';
 				} else if (event.innerText.includes('YOUTH')) {
 					title = event.innerText.split('YOUTH')[0] + 'YOUTH';
 				} else if (event.innerText.includes('MASTERS')) {
@@ -224,9 +205,9 @@ const scraperObject = {
 				} else {
 					title = event.innerText.split(new Date().getFullYear())[0] + new Date().getFullYear();
 				}
-				// const date = event.innerText.split(title + ' ')[1].split(' @')[0];
-				// const link = event.querySelector('a').getAttribute('href');
-				return { title };
+				const date = event.innerText.split(' @ ')[0].split(title)[1];
+				const link = event.querySelector('a').getAttribute('href');
+				return { title, date };
 			});
 		});
 		console.log(data);
