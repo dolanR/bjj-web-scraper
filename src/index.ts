@@ -363,16 +363,20 @@ if (browserInstance) {
 		const tempArray = mergeAndSortArrays(dataObject.ibjjfData, dataObject.giData);
 		const finalArray = mergeAndSortArrays(tempArray, dataObject.AJPData);
 		for (let i = 0; i < finalArray.length; i++) {
-			// Loop over each event and detect if two events have the same latitude and longitude, if so, add a small amount to the longitude
+			// Loop over each event and detect if two events have the same latitude and longitude, or a very close latitude and longitude, if so, add a small amount to the longitude
 			const event = finalArray[i];
 			for (let j = 0; j < finalArray.length; j++) {
 				if (i === j) continue;
 				const otherEvent = finalArray[j];
 				if (
-					Math.abs(event.coordinates!.latitude - otherEvent.coordinates!.latitude) < 0.001 &&
-					Math.abs(event.coordinates!.longitude - otherEvent.coordinates!.longitude) < 0.001
+					Math.abs(event.coordinates!.latitude - otherEvent.coordinates!.latitude) < 0.03 &&
+					Math.abs(event.coordinates!.longitude - otherEvent.coordinates!.longitude) < 0.03
 				) {
-					event.coordinates!.longitude += 0.05;
+					event.coordinates!.longitude += 0.03;
+				} else if (Math.abs(event.coordinates!.latitude - otherEvent.coordinates!.latitude) < 0.03) {
+					event.coordinates!.latitude += 0.03;
+				} else if (Math.abs(event.coordinates!.longitude - otherEvent.coordinates!.longitude) < 0.03) {
+					event.coordinates!.longitude += 0.03;
 				}
 			}
 		}
