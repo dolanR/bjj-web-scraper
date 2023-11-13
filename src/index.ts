@@ -26,7 +26,7 @@ const launchBrowser = async () => {
 	let browser: Browser | null = null;
 	try {
 		browser = await puppeteer.launch({
-			headless: false,
+			headless: 'new',
 			args: [
 				'--no-sandbox',
 				'--disable-setuid-sandbox',
@@ -72,8 +72,8 @@ const scrapeData = async (browserInstance: Browser) => {
 const scraperObject = {
 	ibjjfUrl: 'https://ibjjf.com/events/calendar',
 	giUrl: 'https://grapplingindustries.com/events/',
-	AJPUrl1: 'https://ajptour.com/en/events-1/events-calendar-2022-2023',
-	AJPUrl2: 'https://ajptour.com/en/events-1/events-calendar-2023-2024',
+	AJPUrl1: 'https://ajptour.com/en/events-1/events-calendar-2023',
+	AJPUrl2: 'https://ajptour.com/en/events-1/events-calendar-2024',
 
 	async ibjjfScraper(browser: Browser) {
 		console.log(`Starting IBJJF Scraper...`);
@@ -184,7 +184,6 @@ const scraperObject = {
 				'body > div.content > section > div > div > div.col-sm-4.col-sm-offset-1 > div:nth-child(3) > div.sc-card-body > ul > li > a',
 				(el) => el.getAttribute('href')
 			);
-			console.log(mapLink);
 			let longitude = parseFloat(mapLink.split('q=')[1].split(',')[1]);
 			let latitude = parseFloat(mapLink.split('q=')[1].split(',')[0]);
 			if (longitude === 0 && latitude === 0) {
@@ -209,28 +208,42 @@ const scraperObject = {
 		const data = (await page.$$eval('body > div.content > section.inverted > div > p', (events) => {
 			return events.map((event) => {
 				if (event.innerText.includes('LEARNING ACADEMY')) return;
-
+				if (event.innerText.includes('FESTIVAL')) return;
 				let title = '';
-				if (event.innerText.includes(new Date().getFullYear() + ' - GI')) {
-					title = event.innerText.split(new Date().getFullYear() + ' - GI')[0] + new Date().getFullYear() + ' - GI';
+				const thisYear = new Date().getFullYear();
+				// prettier-ignore
+				const nextYear = (new Date().getFullYear() + 1);
+
+				if (event.innerText.includes(thisYear + ' - GI')) {
+					title = event.innerText.split(thisYear + ' - GI')[0] + thisYear + ' - GI';
+				} else if (event.innerText.includes(nextYear + ' - GI')) {
+					title = event.innerText.split(nextYear + ' - GI')[0] + nextYear + ' - GI';
 				} else if (event.innerText.includes('YOUTH')) {
 					title = event.innerText.split('YOUTH')[0] + 'YOUTH';
+				} else if (event.innerText.includes('AMATEURS')) {
+					title = event.innerText.split('AMATEURS')[0] + 'AMATEURS';
 				} else if (event.innerText.includes('MASTERS')) {
 					title = event.innerText.split('MASTERS')[0] + 'MASTERS';
 				} else if (event.innerText.includes('PROFESSIONAL')) {
 					title = event.innerText.split('PROFESSIONAL')[0] + 'PROFESSIONAL';
 				} else {
-					title = event.innerText.split(new Date().getFullYear())[0] + new Date().getFullYear();
+					if (event.innerText.includes(thisYear)) {
+						title = event.innerText.split(thisYear)[0] + thisYear;
+					} else {
+						title = event.innerText.split(nextYear)[0] + nextYear;
+					}
 				}
+
 				if (title) title = title.toString().trim();
 				const linkElement = event.querySelector('a');
-				const link = linkElement ? linkElement.getAttribute('href') : undefined;
+				const link = linkElement ? linkElement.getAttribute('href').toString() : '';
 
 				let date: string = 'N/A';
-
 				if (linkElement && linkElement.parentElement) {
 					linkElement.parentElement.removeChild(linkElement!);
 					date = event.innerText.split('@')[0];
+				} else {
+					date = event.innerText.split(title)[1].split('@')[0];
 				}
 				if (date) date = date.toString().trim();
 				let location = event.innerText.split('@')[1];
@@ -252,7 +265,11 @@ const scraperObject = {
 				console.warn(`Warning: No date found for AJP event at index ${i}: ${JSON.stringify(event, null, 2)}`);
 				continue;
 			}
-
+			// the next year event section includes the year in the date key, so if the date contains the next year, we know it's the next year event section
+			if (event.date.includes((new Date().getFullYear() + 1).toString())) {
+				filteredArray = data;
+				break;
+			}
 			let eventDate: string;
 			if (event.date.includes('-')) {
 				// console.log(event.date);
@@ -260,7 +277,6 @@ const scraperObject = {
 			} else {
 				eventDate = event.date.trim();
 			}
-
 			const eventMonth = getMonthFromString(eventDate.split(' ')[0]);
 			const eventDay = parseInt(eventDate.split(' ')[1].replace('*', ''));
 
@@ -281,6 +297,11 @@ const scraperObject = {
 		}
 
 		for (let i = 0; i < filteredArray.length; i++) {
+			if (filteredArray[i] === null || filteredArray[i].title === null) {
+				filteredArray.splice(i, 1);
+				i--;
+				continue;
+			}
 			if (filteredArray[i] && filteredArray[i]?.link) {
 				const AJPEventUrl = filteredArray[i]!.link;
 				if (!AJPEventUrl) {
@@ -299,14 +320,21 @@ const scraperObject = {
 					'body > div.content > section > div > div > div.col-sm-4.col-sm-offset-1 > div:nth-child(3) > div > div > iframe',
 					(el) => el.getAttribute('src')
 				);
-				let longitude = parseFloat(mapLink.split('&lat=')[1].split('&')[0]);
-				let latitude = parseFloat(mapLink.split('&lng=')[1].split('&')[0]);
+				let longitude = parseFloat(mapLink.split('&lng=')[1].split('&')[0]);
+				let latitude = parseFloat(mapLink.split('&lat=')[1].split('&')[0]);
 				if (longitude === 0 && latitude === 0) {
+					longitude = 26.3651875;
+					latitude = -82.85201536;
+				}
+				if (Number.isNaN(longitude) || Number.isNaN(latitude)) {
 					longitude = 26.3651875;
 					latitude = -82.85201536;
 				}
 				filteredArray[i]!.coordinates = { longitude, latitude };
 				console.log(filteredArray[i]);
+			}
+			if (filteredArray[i].coordinates?.latitude === 0 && filteredArray[i].coordinates?.longitude === 0) {
+				filteredArray[i].coordinates = { longitude: 26.3651875, latitude: -82.85201536 };
 			}
 		}
 		await page.close();
@@ -344,7 +372,7 @@ if (browserInstance) {
 					Math.abs(event.coordinates!.latitude - otherEvent.coordinates!.latitude) < 0.001 &&
 					Math.abs(event.coordinates!.longitude - otherEvent.coordinates!.longitude) < 0.001
 				) {
-					event.coordinates!.longitude += 0.015;
+					event.coordinates!.longitude += 0.05;
 				}
 			}
 		}
@@ -425,8 +453,16 @@ function giDateConvert(event: Event) {
 }
 function AJPDateConvert(event: Event) {
 	if (event.title.includes(new Date().getFullYear().toString())) {
-		return new Date(event.date + ' ' + new Date().getFullYear().toString());
+		if (event.date.includes(' - ')) {
+			return new Date(new Date().getFullYear() + ' ' + event.date.split(' - ')[0]);
+		} else {
+			return new Date(new Date().getFullYear() + ' ' + event.date);
+		}
 	} else {
-		return new Date(event.date + ' ' + (new Date().getFullYear() + 1).toString());
+		if (event.date.includes(' - ')) {
+			return new Date(new Date().getFullYear() + 1 + ' ' + event.date.split(' - ')[0]);
+		} else {
+			return new Date(new Date().getFullYear() + 1 + ' ' + event.date);
+		}
 	}
 }
