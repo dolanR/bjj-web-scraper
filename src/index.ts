@@ -302,6 +302,12 @@ const scraperObject = {
 				i--;
 				continue;
 			}
+			// Getting rid of events that don't have a date, because they also don't have links
+			if (filteredArray[i].date.includes('TBC')) {
+				filteredArray.splice(i, 1);
+				i--;
+				continue;
+			}
 			if (filteredArray[i] && filteredArray[i]?.link) {
 				const AJPEventUrl = filteredArray[i]!.link;
 				if (!AJPEventUrl) {
@@ -455,20 +461,25 @@ function giDateConvert(event: Event) {
 	if (event.date.split(' ').length < 3) return new Date(new Date().getFullYear() + ' ' + event.date);
 	return new Date(event.date);
 }
-
+// prettier-ignore
 function AJPDateConvert(event: Event) {
-	if (event.title.includes(new Date().getFullYear().toString())) {
-		if (event.date.includes(' - ')) {
-			return new Date(new Date().getFullYear() + ' ' + event.date.split(' - ')[0]);
+	if (event.date.includes((new Date().getFullYear() + 1).toString())) {
+		if (event.date.includes('-')) {
+			return new Date(event.date.split('-')[0]);
 		} else {
-			return new Date(new Date().getFullYear() + ' ' + event.date);
+			return new Date(event.date);
 		}
-	} else {
-		// prettier-ignore
-		if (event.date.includes(' - ')) {
-			return new Date((new Date().getFullYear() + 1) + ' ' + event.date.split(' - ')[0]);
+	} else if (event.title.includes((new Date().getFullYear() + 1).toString())) {
+		if (event.date.includes('-')) {
+			return new Date((new Date().getFullYear() + 1) + ' ' + event.date.split('-')[0]);
 		} else {
 			return new Date((new Date().getFullYear() + 1) + ' ' + event.date);
+		}
+	} else {
+		if (event.date.includes('-')) {
+			return new Date(new Date().getFullYear() + ' ' + event.date.split('-')[0]);
+		} else {
+			return new Date(new Date().getFullYear() + ' ' + event.date);
 		}
 	}
 }
