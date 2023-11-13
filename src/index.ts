@@ -455,6 +455,7 @@ function giDateConvert(event: Event) {
 	if (event.date.split(' ').length < 3) return new Date(new Date().getFullYear() + ' ' + event.date);
 	return new Date(event.date);
 }
+
 function AJPDateConvert(event: Event) {
 	if (event.title.includes(new Date().getFullYear().toString())) {
 		if (event.date.includes(' - ')) {
@@ -463,10 +464,11 @@ function AJPDateConvert(event: Event) {
 			return new Date(new Date().getFullYear() + ' ' + event.date);
 		}
 	} else {
+		// prettier-ignore
 		if (event.date.includes(' - ')) {
-			return new Date(new Date().getFullYear() + 1 + ' ' + event.date.split(' - ')[0]);
+			return new Date((new Date().getFullYear() + 1) + ' ' + event.date.split(' - ')[0]);
 		} else {
-			return new Date(new Date().getFullYear() + 1 + ' ' + event.date);
+			return new Date((new Date().getFullYear() + 1) + ' ' + event.date);
 		}
 	}
 }
