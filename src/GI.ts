@@ -1,6 +1,6 @@
 import { Browser } from 'puppeteer';
-import type { Event } from './index';
-import { giUrl } from './index';
+import type { Event } from './main';
+import { giUrl } from './main';
 
 export async function giScraper(browser: Browser) {
 	console.log(`Starting GI Scraper...`);

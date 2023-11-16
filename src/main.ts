@@ -1,13 +1,19 @@
 import { createClient } from '@libsql/client';
 import 'dotenv/config';
 import puppeteer, { Browser } from 'puppeteer';
-import { AJPDateConvert, AJPscraper } from './AJP';
-import { giDateConvert, giScraper } from './GI';
-import { ibjjfDateConvert, ibjjfScraper } from './IBJJF';
+import { AJPDateConvert, AJPscraper } from './AJP.ts';
+import { giDateConvert, giScraper } from './GI.ts';
+import { ibjjfDateConvert, ibjjfScraper } from './IBJJF.ts';
 import { mergeAndSortArrays } from './util.ts';
+import { NAGADateConvert, NAGAScraper } from './NAGA.ts';
+import { ADCCDateConvert, ADCCScraper } from './ADCC.ts';
 
 export const ibjjfUrl = 'https://ibjjf.com/events/calendar';
 export const giUrl = 'https://grapplingindustries.com/events/';
+export const ADCCUrl = 'https://adcombat.com/adcc-events/';
+
+const NAGAUrl1 = 'https://www.nagafighter.com/events/list/';
+const NAGAUrl2 = 'https://www.nagafighter.com/events/list/page/2/';
 
 const AJPUrl1 = 'https://ajptour.com/en/events-1/events-calendar-2023';
 const AJPUrl2 = 'https://ajptour.com/en/events-1/events-calendar-2024';
@@ -59,7 +65,18 @@ const scrapeData = async (browserInstance: Browser) => {
 			console.log('Browser instance is null');
 			return null;
 		}
-
+		const ADCCData = await ADCCScraper(browserInstance);
+		if (!ADCCData) {
+			console.log('No data was scraped');
+			return null;
+		}
+		const NAGAData1 = await NAGAScraper(browserInstance, NAGAUrl1);
+		const NAGAData2 = await NAGAScraper(browserInstance, NAGAUrl2);
+		if (!NAGAData1 || !NAGAData2) {
+			console.log('No data was scraped');
+			return null;
+		}
+		const NAGAData = [...NAGAData1, ...NAGAData2];
 		const AJPData1 = await AJPscraper(browserInstance, AJPUrl1);
 		const AJPData2 = await AJPscraper(browserInstance, AJPUrl2);
 		if (!AJPData1 || !AJPData2) {
@@ -73,7 +90,7 @@ const scrapeData = async (browserInstance: Browser) => {
 			console.log('No data was scraped');
 			return null;
 		}
-		return { AJPData, ibjjfData, giData };
+		return { ADCCData, NAGAData, AJPData, ibjjfData, giData };
 	} catch (err) {
 		console.log('Could not resolve the browser instance => ', err);
 	}
@@ -84,6 +101,14 @@ if (browserInstance) {
 	await browserInstance.close();
 	console.log(`Finished scraping data. Starting date conversions and sorting...`);
 	if (dataObject) {
+		for (let i = 0; i < dataObject.ADCCData.length; i++) {
+			const event = dataObject.ADCCData[i];
+			event.exactDate = ADCCDateConvert(event);
+		}
+		for (let i = 0; i < dataObject.NAGAData.length; i++) {
+			const event = dataObject.NAGAData[i];
+			event.exactDate = NAGADateConvert(event);
+		}
 		for (let i = 0; i < dataObject.AJPData.length; i++) {
 			const event = dataObject.AJPData[i];
 			event.exactDate = AJPDateConvert(event);
@@ -96,8 +121,14 @@ if (browserInstance) {
 			const event = dataObject.giData[i];
 			event.exactDate = giDateConvert(event);
 		}
-		const tempArray = mergeAndSortArrays(dataObject.ibjjfData, dataObject.giData);
-		const finalArray = mergeAndSortArrays(tempArray, dataObject.AJPData);
+		// Merge and sort all the arrays using the function in util
+		const finalArray = mergeAndSortArrays(
+			dataObject.ADCCData,
+			mergeAndSortArrays(
+				dataObject.NAGAData,
+				mergeAndSortArrays(dataObject.AJPData, mergeAndSortArrays(dataObject.ibjjfData, dataObject.giData))
+			)
+		);
 		for (let i = 0; i < finalArray.length; i++) {
 			// Loop over each event and detect if two events have the same latitude and longitude, or a very close latitude and longitude, if so, add a small amount to the longitude
 			const event = finalArray[i];
@@ -105,14 +136,11 @@ if (browserInstance) {
 				if (i === j) continue;
 				const otherEvent = finalArray[j];
 				if (
-					Math.abs(event.coordinates!.latitude - otherEvent.coordinates!.latitude) < 0.03 &&
+					Math.abs(event.coordinates!.latitude - otherEvent.coordinates!.latitude) < 0.03 ||
 					Math.abs(event.coordinates!.longitude - otherEvent.coordinates!.longitude) < 0.03
 				) {
 					event.coordinates!.longitude += 0.03;
-				} else if (Math.abs(event.coordinates!.latitude - otherEvent.coordinates!.latitude) < 0.03) {
 					event.coordinates!.latitude += 0.03;
-				} else if (Math.abs(event.coordinates!.longitude - otherEvent.coordinates!.longitude) < 0.03) {
-					event.coordinates!.longitude += 0.03;
 				}
 			}
 		}

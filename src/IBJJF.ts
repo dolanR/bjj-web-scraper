@@ -1,6 +1,6 @@
 import { Browser } from 'puppeteer';
-import type { Event } from './index';
-import { ibjjfUrl } from './index';
+import type { Event } from './main';
+import { ibjjfUrl } from './main';
 import { getMonthFromString } from './util';
 
 export async function ibjjfScraper(browser: Browser) {

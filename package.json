@@ -1,7 +1,7 @@
 {
 	"name": "yarn-webscrape-test",
 	"description": "webscraper test",
-	"module": "./src/index.ts",
+	"module": "./src/main.ts",
 	"type": "module",
 	"author": {
 		"name": "Jerren T",
@@ -9,9 +9,9 @@
 	},
 	"license": "GPL-3.0-or-later",
 	"scripts": {
-		"dev": "ts-node --esm src/index.ts",
+		"dev": "ts-node --esm src/main.ts",
 		"build": "yarn clean && yarn typecheck && yarn build",
-		"start": "yarn run ./dist/index.js",
+		"start": "yarn run ./dist/main.js",
 		"lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --cache --fix --ignore-path ./.gitignore",
 		"format": "prettier --ignore-path .gitignore --log-level warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
 		"pipeline": "yarn install && yarn format && yarn lint && yarn typecheck && yarn clean && yarn build",

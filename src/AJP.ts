@@ -1,5 +1,5 @@
 import { Browser } from 'puppeteer';
-import type { Event } from './index';
+import type { Event } from './main';
 import { getMonthFromString } from './util';
 
 export async function AJPscraper(browser: Browser, url: string) {
