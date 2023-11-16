@@ -21,6 +21,7 @@
 		"composite": true,
 
 		"esModuleInterop": true,
+		"rootDir": "./src",
 		"strict": true,
 		"downlevelIteration": true,
 		"skipLibCheck": true,
@@ -28,5 +29,11 @@
 		"allowSyntheticDefaultImports": true,
 		"forceConsistentCasingInFileNames": true,
 		"allowJs": true
+	},
+	"include": ["./src/**/*"],
+	"exclude": ["node_modules", "dist"],
+	"ts-node": {
+		"esm": true,
+		"experimentalSpecifierResolution": "node"
 	}
 }

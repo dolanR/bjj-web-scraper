@@ -1,4 +1,4 @@
-import { Event } from 'src';
+import type { Event } from './index';
 
 export function mergeAndSortArrays(array1: Event[], array2: Event[]) {
 	const combinedArray = [...array1, ...array2];

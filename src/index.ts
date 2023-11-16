@@ -1,10 +1,10 @@
 import { createClient } from '@libsql/client';
 import 'dotenv/config';
 import puppeteer, { Browser } from 'puppeteer';
-import { mergeAndSortArrays } from './util';
 import { AJPDateConvert, AJPscraper } from './AJP';
 import { giDateConvert, giScraper } from './GI';
 import { ibjjfDateConvert, ibjjfScraper } from './IBJJF';
+import { mergeAndSortArrays } from './util.ts';
 
 export const ibjjfUrl = 'https://ibjjf.com/events/calendar';
 export const giUrl = 'https://grapplingindustries.com/events/';
