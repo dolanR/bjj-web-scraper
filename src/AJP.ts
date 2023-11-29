@@ -7,7 +7,7 @@ export async function AJPscraper(browser: Browser, url: string) {
 	const page = await browser.newPage();
 	console.log(`Navigating to ${url}...`);
 	await page.goto(url);
-	await page.waitForSelector('body > div.content > section.inverted > div > p:nth-child(5) > a');
+	await page.waitForSelector('body > div.content > section.inverted > div > p > a');
 	const data = (await page.$$eval('body > div.content > section.inverted > div > p', (events) => {
 		return events.map((event) => {
 			if (event.innerText.includes('LEARNING ACADEMY')) return;
@@ -48,9 +48,18 @@ export async function AJPscraper(browser: Browser, url: string) {
 			} else {
 				date = event.innerText.split(title)[1].split('@')[0];
 			}
-			if (date) date = date.toString().trim();
-			let location = event.innerText.split('@')[1];
-			location = location.toString().trim();
+			if (date) {
+				date = date.toString().trim();
+			} else {
+				date = 'N/A';
+			}
+			let location = '';
+			location = event.innerText.split('@')[1];
+			if (location) {
+				location = location.toString().trim();
+			} else {
+				location = 'N/A';
+			}
 
 			const coordinates = { longitude: 0, latitude: 0 };
 			return { title, date, location, link, coordinates };

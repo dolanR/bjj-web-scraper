@@ -29,7 +29,7 @@ export async function ADCCScraper(browser: Browser) {
 		try {
 			await page.waitForSelector(
 				'div.rw-event-heading.fl-row-full-width > div > div.rw-event-heading-left.col-md-8 > div.rw-event-heading-map > iframe',
-				{ timeout: 5000 }
+				{ timeout: 4000 }
 			);
 		} catch {
 			data[i].coordinates.latitude = -82.85201536;
