@@ -32,13 +32,14 @@ export async function NAGAScraper(browser: Browser, url: string) {
 		if (!element) return null;
 		const frame = await element.contentFrame();
 		if (!frame) return null;
+		await page.waitForSelector('div.tribe_events > div.tribe-events-single-event-description.tribe-events-content');
 		await element.scrollIntoView();
 		await frame.waitForSelector(
-			'#mapDiv > div > div > div:nth-child(5) > div > div > div > div > div.google-maps-link > a'
+			'#mapDiv > div > div.gm-style > div:nth-child(4) > div > div > div > div > div.google-maps-link > a'
 		);
 		await element.scrollIntoView();
 		const mapLink = await frame.$eval(
-			'#mapDiv > div > div > div:nth-child(5) > div > div > div > div > div.google-maps-link > a',
+			'#mapDiv > div > div.gm-style > div:nth-child(4) > div > div > div > div > div.google-maps-link > a',
 			(el) => el.getAttribute('href')
 		);
 		let longitude = parseFloat(mapLink.split('ll=')[1].split('&z=')[0].split(',')[1]);
