@@ -81,8 +81,13 @@ export async function ibjjfScraper(browser: Browser) {
 export function ibjjfDateConvert(event: Event) {
 	// convert month to number
 	const month = getMonthFromString(event.date.split(' ')[0]);
-	const day = parseInt(event.date.split(' ')[1].replace('*', ''));
+	let day = 0;
+	if (event.date.includes(' - ')) {
+		day = parseInt(event.date.split(' - ')[0].replace('*', '').split(' ')[1]);
+	} else {
+		day = parseInt(event.date.split(' ')[1].replace('*', ''));
+	}
 	const year = parseInt(event.title.split(' ')[event.title.split(' ').length - 1]);
-	const date = new Date(`${month} ${day} ${year}`);
+	const date = new Date(year, month, day);
 	return date;
 }

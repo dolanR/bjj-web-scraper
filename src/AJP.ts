@@ -45,6 +45,9 @@ export async function AJPscraper(browser: Browser, url: string) {
 			if (linkElement && linkElement.parentElement) {
 				linkElement.parentElement.removeChild(linkElement!);
 				date = event.innerText.split('@')[0];
+				if (date.includes(' - GI ')) {
+					date = date.split(' - GI ')[1];
+				}
 			} else {
 				date = event.innerText.split(title)[1].split('@')[0];
 			}
@@ -115,7 +118,7 @@ export async function AJPscraper(browser: Browser, url: string) {
 			continue;
 		}
 		// Getting rid of events that don't have a date, because they also don't have links
-		if (filteredArray[i].date.includes('TBC')) {
+		if (filteredArray[i].date.includes('TBC') || filteredArray[i].date.includes('N/A')) {
 			filteredArray.splice(i, 1);
 			i--;
 			continue;

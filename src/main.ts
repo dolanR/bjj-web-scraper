@@ -164,6 +164,11 @@ if (browserInstance) {
 			}
 			console.log('Inserting data into database...');
 			for (let i = 0; i < finalArray.length; i++) {
+				//Check to see if the event exact date is invalid, if so, skip it
+				if (finalArray[i].exactDate!.toString() === 'Invalid Date') {
+					console.log(`Skipping event at index ${i}: ${finalArray[i].title}`);
+					continue;
+				}
 				await client.execute({
 					sql: 'insert into events ( title, date, location, link, exactDate, longitude, latitude ) values ( :title, :date, :location, :link, :exactDate, :longitude, :latitude )',
 					args: {
