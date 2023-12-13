@@ -21,8 +21,7 @@ export async function ibjjfScraper(browser: Browser) {
 			return { title, date, coordinates, location, link };
 		});
 	});
-
-	let filteredArray: Event[] = [];
+	let filteredArray: Event[] = [...data];
 	const month = new Date().getMonth() + 1;
 
 	for (let i = 0; i < data.length; i++) {

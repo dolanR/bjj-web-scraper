@@ -65,6 +65,7 @@ const scrapeData = async (browserInstance: Browser) => {
 			console.log('Browser instance is null');
 			return null;
 		}
+		const ibjjfData = await ibjjfScraper(browserInstance);
 		const ADCCData = await ADCCScraper(browserInstance);
 		if (!ADCCData) {
 			console.log('No data was scraped');
@@ -84,7 +85,6 @@ const scrapeData = async (browserInstance: Browser) => {
 			return null;
 		}
 		const AJPData = [...AJPData1, ...AJPData2];
-		const ibjjfData = await ibjjfScraper(browserInstance);
 		const giData = await giScraper(browserInstance);
 		if (!ibjjfData || !giData || !AJPData) {
 			console.log('No data was scraped');
