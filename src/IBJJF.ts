@@ -88,6 +88,6 @@ export function ibjjfDateConvert(event: Event) {
 		day = parseInt(event.date.split(' ')[1].replace('*', ''));
 	}
 	const year = parseInt(event.title.split(' ')[event.title.split(' ').length - 1]);
-	const date = new Date(year, month, day);
+	const date = new Date(year, month - 1, day);
 	return date;
 }
