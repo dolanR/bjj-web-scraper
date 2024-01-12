@@ -164,13 +164,13 @@ export async function AJPscraper(browser: Browser, url: string) {
 }
 
 export function AJPDateConvert(event: Event) {
-	if (event.date.includes((new Date().getFullYear() + 1).toString())) {
+	if (event.date.includes(new Date().getFullYear().toString())) {
 		if (event.date.includes('-')) {
 			return new Date(event.date.split('-')[0]);
 		} else {
 			return new Date(event.date);
 		}
-	} else if (event.title.includes((new Date().getFullYear() + 1).toString())) {
+	} else if (event.title.includes(new Date().getFullYear().toString())) {
 		if (event.date.includes('-')) {
 			return new Date(new Date().getFullYear() + 1 + ' ' + event.date.split('-')[0]);
 		} else {

@@ -15,8 +15,7 @@ export const ADCCUrl = 'https://adcombat.com/adcc-events/';
 const NAGAUrl1 = 'https://www.nagafighter.com/events/list/';
 const NAGAUrl2 = 'https://www.nagafighter.com/events/list/page/2/';
 
-const AJPUrl1 = 'https://ajptour.com/en/events-1/events-calendar-2023';
-const AJPUrl2 = 'https://ajptour.com/en/events-1/events-calendar-2024';
+const AJPUrl = 'https://ajptour.com/en/events-1/events-calendar-2024';
 
 console.log(`ENV - LIBSQL_DB_AUTH_TOKEN: ${process.env.LIBSQL_DB_AUTH_TOKEN}`);
 const client = createClient({
@@ -78,13 +77,11 @@ const scrapeData = async (browserInstance: Browser) => {
 			return null;
 		}
 		const NAGAData = [...NAGAData1, ...NAGAData2];
-		const AJPData1 = await AJPscraper(browserInstance, AJPUrl1);
-		const AJPData2 = await AJPscraper(browserInstance, AJPUrl2);
-		if (!AJPData1 || !AJPData2) {
+		const AJPData = await AJPscraper(browserInstance, AJPUrl);
+		if (!AJPData) {
 			console.log('No data was scraped');
 			return null;
 		}
-		const AJPData = [...AJPData1, ...AJPData2];
 		const giData = await giScraper(browserInstance);
 		if (!ibjjfData || !giData || !AJPData) {
 			console.log('No data was scraped');
