@@ -40,8 +40,14 @@ export async function ADCCScraper(browser: Browser) {
 			'div.rw-event-heading.fl-row-full-width > div > div.rw-event-heading-left.col-md-8 > div.rw-event-heading-map > iframe',
 			(el) => el.getAttribute('src')
 		);
-		let longitude = parseFloat(mapLink.split('!2d')[1].split('!3d')[0]);
-		let latitude = parseFloat(mapLink.split('!3d')[1].split('!')[0]);
+		let longitude = 0;
+		let latitude = 0;
+		if (!mapLink) {
+			console.log('No map link found for', data[i].title);
+		} else {
+			longitude = parseFloat(mapLink.split('!2d')[1].split('!3d')[0]);
+			latitude = parseFloat(mapLink.split('!3d')[1].split('!')[0]);
+		}
 		if (Number.isNaN(longitude) || Number.isNaN(latitude)) {
 			latitude = -82.85201536;
 			longitude = 26.3651875;

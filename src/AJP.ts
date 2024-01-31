@@ -93,7 +93,7 @@ export async function AJPscraper(browser: Browser, url: string) {
 			eventDate = event.date.trim();
 		}
 		const eventMonth = getMonthFromString(eventDate.split(' ')[0]);
-		const eventDay = parseInt(eventDate.split(' ')[1].replace('*', ''));
+		const eventDay = parseInt(eventDate.split(' ')[1]);
 
 		// find the first event that is in the future
 		if (eventMonth >= month) {

@@ -12,8 +12,9 @@ export const ibjjfUrl = 'https://ibjjf.com/events/calendar';
 export const giUrl = 'https://grapplingindustries.com/events/';
 export const ADCCUrl = 'https://adcombat.com/adcc-events/';
 
-const NAGAUrl1 = 'https://www.nagafighter.com/events/list/';
+const NAGAUrl1 = 'https://www.nagafighter.com/events/';
 const NAGAUrl2 = 'https://www.nagafighter.com/events/list/page/2/';
+const NAGAUrl3 = 'https://www.nagafighter.com/events/list/page/3/';
 
 const AJPUrl = 'https://ajptour.com/en/events-1/events-calendar-2024';
 
@@ -64,19 +65,20 @@ const scrapeData = async (browserInstance: Browser) => {
 			console.log('Browser instance is null');
 			return null;
 		}
+		const NAGAData1 = await NAGAScraper(browserInstance, NAGAUrl1);
+		const NAGAData2 = await NAGAScraper(browserInstance, NAGAUrl2);
+		const NAGAData3 = await NAGAScraper(browserInstance, NAGAUrl3);
+		if (!NAGAData1 || !NAGAData2 || !NAGAData3) {
+			console.log('No data was scraped');
+			return null;
+		}
 		const ibjjfData = await ibjjfScraper(browserInstance);
 		const ADCCData = await ADCCScraper(browserInstance);
 		if (!ADCCData) {
 			console.log('No data was scraped');
 			return null;
 		}
-		const NAGAData1 = await NAGAScraper(browserInstance, NAGAUrl1);
-		const NAGAData2 = await NAGAScraper(browserInstance, NAGAUrl2);
-		if (!NAGAData1 || !NAGAData2) {
-			console.log('No data was scraped');
-			return null;
-		}
-		const NAGAData = [...NAGAData1, ...NAGAData2];
+		const NAGAData = [...NAGAData1, ...NAGAData2, ...NAGAData3];
 		const AJPData = await AJPscraper(browserInstance, AJPUrl);
 		if (!AJPData) {
 			console.log('No data was scraped');
