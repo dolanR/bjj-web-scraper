@@ -12,11 +12,10 @@ export async function AJPscraper(browser: Browser, url: string) {
 		return events.map((event) => {
 			if (event.innerText.includes('LEARNING ACADEMY')) return;
 			if (event.innerText.includes('FESTIVAL')) return;
+			if (event.innerText.includes('SEMINAR')) return;
 			let title = '';
 			const thisYear = new Date().getFullYear();
-			// prettier-ignore
-			const nextYear = (new Date().getFullYear() + 1);
-
+			const nextYear = new Date().getFullYear() + 1;
 			if (event.innerText.includes(thisYear + ' - GI')) {
 				title = event.innerText.split(thisYear + ' - GI')[0] + thisYear + ' - GI';
 			} else if (event.innerText.includes(nextYear + ' - GI')) {
@@ -131,16 +130,11 @@ export async function AJPscraper(browser: Browser, url: string) {
 			}
 			console.log(`Navigating to ${AJPEventUrl}...`);
 			await page.goto(AJPEventUrl);
-			const element = await page.waitForSelector(
-				'body > div.content > section > div > div > div.col-sm-4.col-sm-offset-1 > div:nth-child(3) > div > div > iframe'
-			);
+			const element = await page.waitForSelector('#accommodations > div > div > iframe');
 			if (!element) return null;
 			const frame = await element.contentFrame();
 			if (!frame) return null;
-			const mapLink = await page.$eval(
-				'body > div.content > section > div > div > div.col-sm-4.col-sm-offset-1 > div:nth-child(3) > div > div > iframe',
-				(el) => el.getAttribute('src')
-			);
+			const mapLink = await page.$eval('#accommodations > div > div > iframe', (el) => el.getAttribute('src'));
 			let longitude = parseFloat(mapLink.split('&lng=')[1].split('&')[0]);
 			let latitude = parseFloat(mapLink.split('&lat=')[1].split('&')[0]);
 			if (longitude === 0 && latitude === 0) {

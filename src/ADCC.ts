@@ -21,7 +21,6 @@ export async function ADCCScraper(browser: Browser) {
 			return { title, date, location, link, coordinates };
 		});
 	});
-	console.log(data);
 
 	for (let i = 0; i < data.length; i++) {
 		console.log(`Navigating to ${data[i].link}...`);
