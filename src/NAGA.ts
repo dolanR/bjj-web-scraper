@@ -5,7 +5,7 @@ export async function NAGAScraper(browser: Browser, url: string) {
 	console.log(`Starting NAGA Scraper...`);
 	const page = await browser.newPage();
 	console.log(`Navigating to ${url}...`);
-	await page.goto(url);
+	await page.goto(url, { waitUntil: 'domcontentloaded' });
 	// Wait for the required DOM to be rendered
 	await page.waitForSelector('.tribe-events-calendar-list');
 	// Get the link to all the events

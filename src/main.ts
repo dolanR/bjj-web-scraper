@@ -1,6 +1,7 @@
 import { createClient } from '@libsql/client';
 import 'dotenv/config';
-import puppeteer, { Browser } from 'puppeteer';
+import { Browser } from 'puppeteer';
+import puppeteer from 'puppeteer-extra';
 import { AJPDateConvert, AJPscraper } from './AJP.ts';
 import { giDateConvert, giScraper } from './GI.ts';
 import { ibjjfDateConvert, ibjjfScraper } from './IBJJF.ts';
@@ -8,6 +9,7 @@ import { mergeAndSortArrays } from './util.ts';
 import { NAGADateConvert, NAGAScraper } from './NAGA.ts';
 import { ADCCDateConvert, ADCCScraper } from './ADCC.ts';
 import { AGFScraper, AGFDateConvert } from './AGF.ts';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 export const ibjjfUrl = 'https://ibjjf.com/events/calendar';
 export const giUrl = 'https://grapplingindustries.com/events/';
@@ -38,13 +40,15 @@ export type Event = {
 	};
 };
 
+puppeteer.use(StealthPlugin());
+
 const launchBrowser = async () => {
 	console.log(`Starting Browser...`);
 
 	let browser: Browser | null = null;
 	try {
 		browser = await puppeteer.launch({
-			headless: 'new',
+			headless: true,
 			args: [
 				'--no-sandbox',
 				'--disable-setuid-sandbox',
@@ -67,11 +71,6 @@ const scrapeData = async (browserInstance: Browser) => {
 			console.log('Browser instance is null');
 			return null;
 		}
-		const AGFData = await AGFScraper(browserInstance);
-		if (!AGFData) {
-			console.log('No AGF data was scraped');
-			return null;
-		}
 		const NAGAData1 = await NAGAScraper(browserInstance, NAGAUrl1);
 		const NAGAData2 = await NAGAScraper(browserInstance, NAGAUrl2);
 		const NAGAData3 = await NAGAScraper(browserInstance, NAGAUrl3);
@@ -80,6 +79,11 @@ const scrapeData = async (browserInstance: Browser) => {
 			return null;
 		}
 		const NAGAData = [...NAGAData1, ...NAGAData2, ...NAGAData3];
+		const AGFData = await AGFScraper(browserInstance);
+		if (!AGFData) {
+			console.log('No AGF data was scraped');
+			return null;
+		}
 		const ibjjfData = await ibjjfScraper(browserInstance);
 		const ADCCData = await ADCCScraper(browserInstance);
 		if (!ADCCData) {
