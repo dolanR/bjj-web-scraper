@@ -25,7 +25,7 @@ export async function AGFScraper(browser: Browser) {
 	});
 	for (let i = 0; i < data.length; i++) {
 		console.log(`Navigating to ${data[i].link}...`);
-		await page.goto(data[i].link!);
+		await page.goto(data[i].link!, { timeout: 0 });
 		try {
 			await page.waitForSelector('main.content', { timeout: 4000 });
 		} catch {

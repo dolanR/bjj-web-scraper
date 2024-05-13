@@ -130,7 +130,12 @@ export async function AJPscraper(browser: Browser, url: string) {
 			}
 			console.log(`Navigating to ${AJPEventUrl}...`);
 			await page.goto(AJPEventUrl);
-			const element = await page.waitForSelector('#accommodations > div > div > iframe');
+			let element;
+			try {
+				element = await page.waitForSelector('#accommodations > div > div > iframe');
+			} catch {
+				continue;
+			}
 			if (!element) return null;
 			const frame = await element.contentFrame();
 			if (!frame) return null;

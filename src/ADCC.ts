@@ -44,6 +44,7 @@ export async function ADCCScraper(browser: Browser) {
 		if (!mapLink) {
 			console.log('No map link found for', data[i].title);
 		} else {
+			console.log(mapLink);
 			longitude = parseFloat(mapLink.split('!2d')[1].split('!3d')[0]);
 			latitude = parseFloat(mapLink.split('!3d')[1].split('!')[0]);
 		}
