@@ -1,11 +1,11 @@
 {
-	"name": "yarn-webscrape-test",
-	"description": "webscraper test",
+	"name": "bjj-web-scraper",
+	"description": "BJJ web scraper for gathering data from various BJJ websites.",
 	"module": "./src/main.ts",
 	"type": "module",
 	"author": {
-		"name": "Jerren T",
-		"email": "Jerren@trifall.com"
+		"name": "Dolan Reynolds",
+		"email": "reynoldsdolan@gmail.com"
 	},
 	"license": "GPL-3.0-or-later",
 	"scripts": {
