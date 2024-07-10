@@ -10,8 +10,7 @@
 	"license": "GPL-3.0-or-later",
 	"scripts": {
 		"dev": "ts-node --esm src/main.ts",
-		"build": "yarn clean && yarn typecheck && yarn build",
-		"start": "yarn run ./dist/main.js",
+		"start": "ts-node --esm src/main.ts",
 		"lint": "eslint \"./src/**/*.{js,jsx,ts,tsx}\" --cache --fix --ignore-path ./.gitignore",
 		"format": "prettier --ignore-path .gitignore --log-level warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
 		"pipeline": "yarn install && yarn format && yarn lint && yarn typecheck && yarn clean && yarn build",
