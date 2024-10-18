@@ -47,9 +47,11 @@ export async function AJPscraper(browser: Browser, url: string) {
 				if (date.includes(' - GI ')) {
 					date = date.split(' - GI ')[1];
 				}
-			} else {
-				date = event.innerText.split(title)[1].split('@')[0];
 			}
+			// this code is breaking the scraper idk why
+			// else {
+			// 	date = event.innerText.split(title)[1].split('@')[0];
+			// }
 			if (date) {
 				date = date.toString().trim();
 			} else {

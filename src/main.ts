@@ -6,7 +6,7 @@ import { AJPDateConvert, AJPscraper } from './AJP.ts';
 import { giDateConvert, giScraper } from './GI.ts';
 import { ibjjfDateConvert, ibjjfScraper } from './IBJJF.ts';
 import { mergeAndSortArrays } from './util.ts';
-import { NAGADateConvert, NAGAScraper } from './NAGA.ts';
+// import { NAGADateConvert, NAGAScraper } from './NAGA.ts';
 import { ADCCDateConvert, ADCCScraper } from './ADCC.ts';
 import { AGFScraper, AGFDateConvert } from './AGF.ts';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
@@ -48,7 +48,7 @@ const launchBrowser = async () => {
 	let browser: Browser | null = null;
 	try {
 		browser = await puppeteer.launch({
-			headless: true,
+			headless: 'new',
 			args: [
 				'--no-sandbox',
 				'--disable-setuid-sandbox',
@@ -71,23 +71,9 @@ const scrapeData = async (browserInstance: Browser) => {
 			console.log('Browser instance is null');
 			return null;
 		}
-		const NAGAData1 = await NAGAScraper(browserInstance, NAGAUrl1);
-		const NAGAData2 = await NAGAScraper(browserInstance, NAGAUrl2);
-		const NAGAData3 = await NAGAScraper(browserInstance, NAGAUrl3);
-		if (!NAGAData1 || !NAGAData2 || !NAGAData3) {
-			console.log('No NAGA data was scraped');
-			return null;
-		}
-		const NAGAData = [...NAGAData1, ...NAGAData2, ...NAGAData3];
 		const AGFData = await AGFScraper(browserInstance);
 		if (!AGFData) {
 			console.log('No AGF data was scraped');
-			return null;
-		}
-		const ibjjfData = await ibjjfScraper(browserInstance);
-		const ADCCData = await ADCCScraper(browserInstance);
-		if (!ADCCData) {
-			console.log('No ADCC data was scraped');
 			return null;
 		}
 		const AJPData = await AJPscraper(browserInstance, AJPUrl);
@@ -95,12 +81,27 @@ const scrapeData = async (browserInstance: Browser) => {
 			console.log('No AJP data was scraped');
 			return null;
 		}
+		// const NAGAData1 = await NAGAScraper(browserInstance, NAGAUrl1);
+		// const NAGAData2 = await NAGAScraper(browserInstance, NAGAUrl2);
+		// const NAGAData3 = await NAGAScraper(browserInstance, NAGAUrl3);
+		// if (!NAGAData1 || !NAGAData2 || !NAGAData3) {
+		// 	console.log('No NAGA data was scraped');
+		// 	return null;
+		// }
+		// const NAGAData = [...NAGAData1, ...NAGAData2, ...NAGAData3];
+		const ibjjfData = await ibjjfScraper(browserInstance);
+		const ADCCData = await ADCCScraper(browserInstance);
+		if (!ADCCData) {
+			console.log('No ADCC data was scraped');
+			return null;
+		}
 		const giData = await giScraper(browserInstance);
 		if (!ibjjfData || !giData || !AJPData) {
 			console.log('No IBJJF data was scraped');
 			return null;
 		}
-		return { AGFData, ADCCData, NAGAData, AJPData, ibjjfData, giData };
+		// add NAGAData back if the website isn't ziggy
+		return { AGFData, ADCCData, AJPData, ibjjfData, giData };
 	} catch (err) {
 		console.log('Could not resolve the browser instance => ', err);
 	}
@@ -120,10 +121,10 @@ if (browserInstance) {
 			const event = dataObject.ADCCData[i];
 			event.exactDate = ADCCDateConvert(event);
 		}
-		for (let i = 0; i < dataObject.NAGAData.length; i++) {
-			const event = dataObject.NAGAData[i];
-			event.exactDate = NAGADateConvert(event);
-		}
+		// for (let i = 0; i < dataObject.NAGAData.length; i++) {
+		// 	const event = dataObject.NAGAData[i];
+		// 	event.exactDate = NAGADateConvert(event);
+		// }
 		for (let i = 0; i < dataObject.AJPData.length; i++) {
 			const event = dataObject.AJPData[i];
 			event.exactDate = AJPDateConvert(event);
@@ -139,12 +140,11 @@ if (browserInstance) {
 		// Merge and sort all the arrays using the function in util
 		const finalArray = mergeAndSortArrays(
 			dataObject.ADCCData,
+			// mergeAndSortArrays(
+			// 	dataObject.NAGAData,
 			mergeAndSortArrays(
-				dataObject.NAGAData,
-				mergeAndSortArrays(
-					dataObject.AJPData,
-					mergeAndSortArrays(dataObject.ibjjfData, mergeAndSortArrays(dataObject.giData, dataObject.AGFData))
-				)
+				dataObject.AJPData,
+				mergeAndSortArrays(dataObject.ibjjfData, mergeAndSortArrays(dataObject.giData, dataObject.AGFData))
 			)
 		);
 		for (let i = 0; i < finalArray.length; i++) {
